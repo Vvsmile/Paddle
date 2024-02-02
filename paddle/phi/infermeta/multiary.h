@@ -904,4 +904,13 @@ void FullWithTensorInferMeta(const MetaTensor& shape,
                              DataType dtype,
                              MetaTensor* out);
 
+void BlockSparseMatmulInferMeta(const MetaTensor& x,
+                                const MetaTensor& y,
+                                const IntArray& spdims,
+                                const IntArray& lut,
+                                bool trans_x,
+                                bool trans_y,
+                                bool trans_z,
+                                int blocks,
+                                MetaTensor* out);
 }  // namespace phi

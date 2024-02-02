@@ -980,6 +980,15 @@
   intermediate : noise
   backward : rrelu_grad
 
+- op : sdd_matmul
+  args : (Tensor a, Tensor b, IntArray spdims, IntArray lut, bool transpose_a, bool transpose_b, bool transpose_c, int blocks)
+  output : Tensor(out)
+  infer_meta :
+      func : BlockSparseMatmulInferMeta
+  kernel :
+          func : sdd_matmul
+  backward : sdd_matmul_grad
+
 - op : sequence_mask
   args: (Tensor x, Scalar(int) max_len, int out_dtype)
   output: Tensor(y)

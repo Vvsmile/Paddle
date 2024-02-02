@@ -1353,4 +1353,15 @@ void SetValueGradInferMeta(const MetaTensor& out_grad,
   }
 }
 
+void BlockSparseMatmulGradInferMeta(const MetaTensor& x,
+                                    const MetaTensor& y,
+                                    const MetaTensor& dout,
+                                    const IntArray& spdims,
+                                    const IntArray& lut,
+                                    bool trans_x,
+                                    bool trans_y,
+                                    int blocks,
+                                    MetaTensor* dx,
+                                    MetaTensor* dy) {}
+
 }  // namespace phi

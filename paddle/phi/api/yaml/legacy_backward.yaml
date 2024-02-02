@@ -612,6 +612,16 @@
     func : rrelu_grad
     data_type : x
 
+- backward_op : sdd_matmul_grad
+  forward : sdd_matmul (Tensor x, Tensor y, IntArray spdims, IntArray lut, bool transpose_a, bool transpose_b, bool transpose_c, int blocks) -> Tensor(out)
+  args : (Tensor x, Tensor y, Tensor out_grad, IntArray spdims, IntArray lut, bool transpose_a, bool transpose_b, bool transpose_c, int blocks)
+  output : Tensor(x_grad), Tensor(y_grad)
+  infer_meta :
+      func : GeneralBinaryGradInferMeta
+      param : [x, y]
+  kernel :
+      func : sdd_matmul_grad
+
 - backward_op : set_value_grad
   forward : set_value (Tensor x, IntArray starts, IntArray ends, IntArray steps, int64_t[] axes, int64_t[] decrease_axes, int64_t[] none_axes, int64_t[] shape, Scalar[] values) -> Tensor(out)
   args : (Tensor out_grad, IntArray starts, IntArray ends, IntArray steps, int64_t[] axes, int64_t[] decrease_axes, int64_t[] none_axes)
