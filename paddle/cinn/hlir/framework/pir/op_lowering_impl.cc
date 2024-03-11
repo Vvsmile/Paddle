@@ -725,6 +725,10 @@ void OpLowererImpl::BuildBroadcastInfo(const GroupPtr& group) {
         info.with_constrain = true;
       }
 
+      if (erase_reshape.count(op_out.first_use().owner())) {
+        info.with_constrain = true;
+      }
+
       broadcast_info[ValueName(op_out)] = info;
 
       for (auto use_it = op_out.use_begin(); use_it != op_out.use_end();
