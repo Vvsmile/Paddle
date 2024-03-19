@@ -76,6 +76,10 @@ class Compiler {
   // compile with nvcc
   std::string CompileWithNvcc(const std::string&);
 
+  std::string getHackFile(const std::string& code);
+
+  std::string ReadHackFile(std::string hack_func_file);
+
   // compile to ptx
   void CompileToPtx();
   // compile to cubin

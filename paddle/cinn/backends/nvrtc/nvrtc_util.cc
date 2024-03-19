@@ -86,8 +86,53 @@ std::vector<std::string> Compiler::FindCINNRuntimeIncludePaths() {
   return {Context::Global().runtime_include_dir()};
 }
 
+std::string Compiler::getHackFile(const std::string& code) {
+  VLOG(-1) << "hack start";
+  std::string dir = "/paddle/cinn/Paddle/hack_dir/cinn";
+  std::string hack_list_file = dir + "/" + "hack_list";
+  std::string hack_list = ReadFile(hack_list_file, std::ios::in);
+  VLOG(-1) << "hack_list: " << hack_list;
+  std::istringstream iss(hack_list);
+  std::string hack_func;
+  while (getline(iss, hack_func, '\n')) {
+    VLOG(-1) << "hack_func: " << hack_func;
+    size_t pos = hack_func.find('@');
+    VLOG(-1) << "hack_func pos: " << pos;
+    if (pos != std::string::npos) {
+      std::string hack_func_name = hack_func.substr(0, pos);
+      VLOG(-1) << "hack_func_name" << hack_func_name;
+      if (code.find(hack_func_name) != std::string::npos) {
+        return hack_func.substr(pos + 1);
+      }
+    }
+  }
+  return "";
+}
+
+std::string Compiler::ReadHackFile(std::string hack_func_file) {
+  std::string dir = "/paddle/cinn/Paddle/hack_dir/cinn";
+  std::string hack_func_file_path = dir + "/" + hack_func_file;
+  return ReadFile(hack_func_file_path, std::ios::in);
+}
+
 std::string Compiler::CompileCudaSource(const std::string& code,
                                         bool include_headers) {
+  // if hack
+  std::string hack_func_file = getHackFile(code);
+  VLOG(-1) << "hack_func_file: " << hack_func_file;
+  bool is_hack_this_func = false;
+  std::string hack_code;
+  if (hack_func_file != "") {
+    is_hack_this_func = true;
+    hack_code = ReadHackFile(hack_func_file);
+    VLOG(-1) << "origin code:";
+    VLOG(-1) << code;
+    VLOG(-1) << "hack code:";
+    VLOG(-1) << hack_code;
+    // code = static_cast<const std::string>(hack_code);
+  }
+
+  std::string compile_code = is_hack_this_func ? hack_code : code;
   const auto& header_gen = JitSafeHeaderGenerator::GetInstance();
   std::vector<std::string> compile_options;
   std::vector<const char*> param_cstrings{};
@@ -135,7 +180,7 @@ std::string Compiler::CompileCudaSource(const std::string& code,
   }
   VLOG(3) << "compile options: " << utils::Join(compile_options, " ");
   NVRTC_CALL(nvrtcCreateProgram(&prog,
-                                code.c_str(),
+                                compile_code.c_str(),
                                 nullptr,
                                 header_gen.size(),
                                 header_gen.headers().data(),
@@ -149,7 +194,8 @@ std::string Compiler::CompileCudaSource(const std::string& code,
     std::string log;
     log.resize(log_size);
     NVRTC_CALL(nvrtcGetProgramLog(prog, &log[0]));
-    CHECK_EQ(compile_res, NVRTC_SUCCESS) << log << "\nThe code is:\n" << code;
+    CHECK_EQ(compile_res, NVRTC_SUCCESS) << log << "\nThe code is:\n"
+                                         << compile_code;
   }
 
   size_t size;
@@ -245,9 +291,11 @@ std::string Compiler::ReadFile(const std::string& file_name,
   // open cubin file
   std::ifstream ifs(file_name, mode);
   CHECK(ifs.is_open()) << "Fail to open file " << file_name;
-  ifs.seekg(std::ios::end);
+  ifs.seekg(0, std::ios::end);
   auto len = ifs.tellg();
-  ifs.seekg(0);
+  ifs.seekg(0, std::ios::beg);
+
+  VLOG(-1) << "file_name: " << file_name << " len: " << len;
 
   // read cubin file
   std::string file_data(len, ' ');
